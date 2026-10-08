@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>九九乘法語音測驗 (iOS版)</title>
+    <title>九九乘法語音測驗 (iOS優化版)</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #f0f4f8;
             display: flex;
             justify-content: center;
@@ -20,123 +20,76 @@
             background: #ffffff;
             border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            padding: 30px;
+            padding: 25px;
             width: 100%;
             max-width: 480px;
             text-align: center;
         }
-        h1 { color: #2c3e50; margin-bottom: 15px; font-size: 26px; }
-        .setting-group {
-            margin: 20px 0;
-            font-size: 18px;
-            color: #34495e;
-        }
+        h1 { color: #2c3e50; margin-bottom: 15px; font-size: 24px; }
+        .setting-group { margin: 15px 0; font-size: 18px; color: #34495e; }
         input[type="number"] {
-            font-size: 20px;
-            padding: 8px;
-            width: 80px;
-            text-align: center;
-            border: 2px solid #3498db;
-            border-radius: 8px;
-            outline: none;
+            font-size: 20px; padding: 6px; width: 70px; text-align: center;
+            border: 2px solid #3498db; border-radius: 8px; outline: none;
         }
         .btn {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 14px 32px;
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-top: 15px;
-            width: 100%;
+            background-color: #3498db; color: white; border: none;
+            padding: 14px 20px; font-size: 18px; font-weight: bold;
+            border-radius: 12px; cursor: pointer; width: 100%; margin-top: 10px;
         }
-        .btn:active { background-color: #2980b9; }
-        
+        .btn-mic {
+            background-color: #e67e22; font-size: 22px; padding: 16px;
+            margin-bottom: 10px; box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
+        }
+        .btn-mic.listening {
+            background-color: #e74c3c; animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
         .progress-bar-container {
-            width: 100%;
-            background-color: #ecf0f1;
-            height: 12px;
-            border-radius: 6px;
-            overflow: hidden;
-            margin-bottom: 15px;
+            width: 100%; background-color: #ecf0f1; height: 10px;
+            border-radius: 5px; overflow: hidden; margin-bottom: 15px;
         }
-        .progress-bar {
-            height: 100%;
-            background-color: #e67e22;
-            width: 100%;
-            transition: width 0.1s linear;
-        }
-
+        .progress-bar { height: 100%; background-color: #2ecc71; width: 100%; transition: width 0.1s linear; }
         .stats-box {
-            display: flex;
-            justify-content: space-around;
-            background: #f8f9fa;
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 16px;
-            font-weight: bold;
+            display: flex; justify-content: space-around; background: #f8f9fa;
+            padding: 10px; border-radius: 10px; margin-bottom: 15px; font-weight: bold;
         }
         .correct-text { color: #27ae60; }
         .wrong-text { color: #e74c3c; }
-
-        .question-box {
-            font-size: 56px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin: 15px 0;
-            letter-spacing: 2px;
-        }
-        .status-msg {
-            font-size: 18px;
-            min-height: 28px;
-            color: #7f8c8d;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        .recognized-text {
-            font-size: 16px;
-            color: #8e44ad;
-            min-height: 24px;
-        }
+        .question-box { font-size: 52px; font-weight: bold; color: #2c3e50; margin: 10px 0; }
+        .status-msg { font-size: 16px; min-height: 24px; color: #7f8c8d; font-weight: bold; margin-bottom: 5px; }
+        .recognized-text { font-size: 15px; color: #8e44ad; min-height: 22px; margin-bottom: 10px; }
         .hidden { display: none; }
-        .warning-box {
-            background-color: #fff3cd;
-            color: #856404;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 15px;
-            text-align: left;
+        
+        /* 備用數字按鈕區 */
+        .numpad {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px;
         }
+        .num-btn {
+            background: #edf2f7; border: 1px solid #cbd5e0; font-size: 20px;
+            font-weight: bold; padding: 12px; border-radius: 8px; color: #2d3748;
+        }
+        .num-btn:active { background: #cbd5e0; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <!-- 設定與開始畫面 -->
     <div id="start-screen">
         <h1>九九乘法語音測驗</h1>
-        
-        <div id="protocol-warning" class="warning-box hidden">
-            ⚠️ 提示：iOS 限制麥克風必須在 HTTPS 網頁運作。若無法語音，請透過網址（如 GitHub Pages）開啟本頁。
-        </div>
-
-        <p style="color: #7f8c8d;">共 25 題，請使用口頭語音回答。</p>
+        <p style="color: #7f8c8d; font-size: 14px;">iOS 提示：請確認 iPad 已開啟「設定 > 一般 > 鍵盤 > 啟用聽寫」。</p>
         
         <div class="setting-group">
             <label for="time-limit">每題思考時間：</label>
             <input type="number" id="time-limit" value="5" min="2" max="10"> 秒
-            <div style="font-size: 13px; color: #95a5a6; margin-top: 5px;">(上限 10 秒)</div>
         </div>
 
-        <button class="btn" onclick="initAndStart()">允許麥克風並開始</button>
+        <button class="btn" onclick="startQuiz()">開始測驗</button>
     </div>
 
-    <!-- 測驗進行畫面 -->
     <div id="quiz-screen" class="hidden">
         <div class="stats-box">
             <div>題數：<span id="current-q">1</span>/25</div>
@@ -149,14 +102,34 @@
         </div>
 
         <div class="question-box" id="question-text">? × ?</div>
-        <div class="status-msg" id="status-msg">請準備回答...</div>
+        
+        <button id="mic-btn" class="btn btn-mic" onclick="toggleListening()">🎙️ 點此開口回答</button>
+
+        <div class="status-msg" id="status-msg">請點擊上方按鈕後回答</div>
         <div class="recognized-text" id="recognized-text"></div>
+
+        <!-- 備用數字鍵盤（語音失效時可直接按） -->
+        <details>
+            <summary style="color: #7f8c8d; font-size: 14px; cursor: pointer;">無法使用語音？點此開啟數字鍵盤</summary>
+            <div class="numpad">
+                <button class="num-btn" onclick="manualInput(1)">1</button>
+                <button class="num-btn" onclick="manualInput(2)">2</button>
+                <button class="num-btn" onclick="manualInput(3)">3</button>
+                <button class="num-btn" onclick="manualInput(4)">4</button>
+                <button class="num-btn" onclick="manualInput(5)">5</button>
+                <button class="num-btn" onclick="manualInput(6)">6</button>
+                <button class="num-btn" onclick="manualInput(7)">7</button>
+                <button class="num-btn" onclick="manualInput(8)">8</button>
+                <button class="num-btn" onclick="manualInput(9)">9</button>
+                <button class="num-btn" onclick="manualInput(0)">0</button>
+                <button class="num-btn" style="grid-column: span 2; background: #feb2b2;" onclick="clearInput()">清除</button>
+            </div>
+        </details>
     </div>
 
-    <!-- 結束結算畫面 -->
     <div id="result-screen" class="hidden">
         <h1>測驗完成！</h1>
-        <div style="font-size: 22px; margin: 20px 0;">
+        <div style="font-size: 20px; margin: 20px 0;">
             <p>答對：<span class="correct-text" id="final-correct">0</span> 題</p>
             <p>答錯：<span class="wrong-text" id="final-wrong">0</span> 題</p>
             <p>正確率：<span id="final-accuracy" style="color: #2980b9; font-weight: bold;">0%</span></p>
@@ -166,97 +139,100 @@
 </div>
 
 <script>
-    let currentQuestion = 0;
-    const totalQuestions = 25;
-    let correctCount = 0;
-    let wrongCount = 0;
+    let currentQuestion = 0, totalQuestions = 25;
+    let correctCount = 0, wrongCount = 0;
     let num1 = 0, num2 = 0, correctAnswer = 0;
-
-    let timeLimit = 5;
-    let timerInterval = null;
-    let remainingTime = 0;
-    let isAnswering = false;
-
+    let timeLimit = 5, timerInterval = null, remainingTime = 0;
+    let isAnswering = false, isListening = false;
     let recognition = null;
+    let inputBuffer = "";
 
-    // 檢查通訊協定
-    if (window.location.protocol === 'file:') {
-        document.getElementById('protocol-warning').classList.remove('hidden');
-    }
-
-    // 初始化語音辨識 (適應 iOS Safari)
     function initSpeech() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            alert("您的瀏覽器不支援語音辨識，iOS 請使用 Safari 瀏覽器。");
+            alert("您的設備不支援語音辨識，請確保使用 iOS Safari 瀏覽器。");
             return false;
         }
+        
+        recognition = new SpeechRecognition();
+        recognition.lang = 'zh-TW';
+        recognition.continuous = false;
+        recognition.interimResults = true;
 
-        if (!recognition) {
-            recognition = new SpeechRecognition();
-            recognition.lang = 'zh-TW';
-            recognition.continuous = false; // iOS 設為 false 較穩定
-            recognition.interimResults = true;
+        recognition.onstart = function() {
+            isListening = true;
+            const btn = document.getElementById('mic-btn');
+            btn.classList.add('listening');
+            btn.innerText = "聆聽中...請說話";
+            document.getElementById('status-msg').innerText = "請清晰說出答案數字";
+        };
 
-            recognition.onresult = function(event) {
-                if (!isAnswering) return;
+        recognition.onresult = function(event) {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
+            }
+            document.getElementById('recognized-text').innerText = '聽到：' + transcript;
+            let parsedNum = parseChineseNumber(transcript);
+            if (parsedNum !== null) {
+                checkAnswer(parsedNum);
+            }
+        };
 
-                let transcript = '';
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    transcript += event.results[i][0].transcript;
-                }
+        recognition.onerror = function(e) {
+            stopListeningUI();
+            if (e.error === 'not-allowed') {
+                alert("麥克風權限被阻擋，請在 Safari 設定中開啟麥克風權限。");
+            }
+        };
 
-                document.getElementById('recognized-text').innerText = '聽到：' + transcript;
-                let parsedNum = parseChineseNumber(transcript);
+        recognition.onend = function() {
+            stopListeningUI();
+        };
 
-                if (parsedNum !== null) {
-                    checkAnswer(parsedNum);
-                }
-            };
-
-            // iOS 辨識容易自動中斷，若還在答題時間內則自動補啟動
-            recognition.onend = function() {
-                if (isAnswering && remainingTime > 0) {
-                    try { recognition.start(); } catch(e) {}
-                }
-            };
-
-            recognition.onerror = function(e) {
-                console.log("語音辨識訊息：", e.error);
-            };
-        }
         return true;
     }
 
-    function initAndStart() {
-        if (!initSpeech()) return;
+    function toggleListening() {
+        if (!isAnswering) return;
+        if (!recognition) initSpeech();
 
-        // 取得並限制時間（最高 10 秒）
+        if (isListening) {
+            try { recognition.stop(); } catch(e){}
+        } else {
+            try { recognition.start(); } catch(e){}
+        }
+    }
+
+    function stopListeningUI() {
+        isListening = false;
+        const btn = document.getElementById('mic-btn');
+        if (btn) {
+            btn.classList.remove('listening');
+            btn.innerText = "🎙️ 點此開口回答";
+        }
+    }
+
+    function startQuiz() {
         let inputTime = parseInt(document.getElementById('time-limit').value);
-        if (isNaN(inputTime) || inputTime < 2) inputTime = 2;
-        if (inputTime > 10) inputTime = 10;
-        timeLimit = inputTime;
-        document.getElementById('time-limit').value = timeLimit;
-
-        currentQuestion = 0;
-        correctCount = 0;
-        wrongCount = 0;
-
+        timeLimit = (isNaN(inputTime) || inputTime < 2) ? 2 : (inputTime > 10 ? 10 : inputTime);
+        
+        currentQuestion = 0; correctCount = 0; wrongCount = 0;
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.add('hidden');
         document.getElementById('quiz-screen').classList.remove('hidden');
 
+        initSpeech();
         nextQuestion();
     }
 
     function nextQuestion() {
-        if (currentQuestion >= totalQuestions) {
-            endQuiz();
-            return;
-        }
+        stopListeningUI();
+        if (currentQuestion >= totalQuestions) { endQuiz(); return; }
 
         currentQuestion++;
         isAnswering = true;
+        inputBuffer = "";
 
         num1 = Math.floor(Math.random() * 8) + 2;
         num2 = Math.floor(Math.random() * 8) + 2;
@@ -266,12 +242,9 @@
         document.getElementById('score-correct').innerText = correctCount;
         document.getElementById('score-wrong').innerText = wrongCount;
         document.getElementById('question-text').innerText = `${num1} × ${num2}`;
-        document.getElementById('status-msg').innerText = "請說出答案...";
+        document.getElementById('status-msg').innerText = "點擊按鈕開口，或使用下方鍵盤";
         document.getElementById('status-msg').style.color = "#34495e";
         document.getElementById('recognized-text').innerText = "";
-
-        // 啟動 iOS 語音辨識
-        try { recognition.start(); } catch(e) {}
 
         startTimer();
     }
@@ -279,27 +252,23 @@
     function startTimer() {
         clearInterval(timerInterval);
         remainingTime = timeLimit * 1000;
-        
         const bar = document.getElementById('timer-bar');
         bar.style.width = '100%';
 
-        const updateInterval = 50;
         timerInterval = setInterval(() => {
-            remainingTime -= updateInterval;
-            let percentage = (remainingTime / (timeLimit * 1000)) * 100;
-            bar.style.width = Math.max(0, percentage) + '%';
-
+            remainingTime -= 50;
+            bar.style.width = Math.max(0, (remainingTime / (timeLimit * 1000)) * 100) + '%';
             if (remainingTime <= 0) {
                 clearInterval(timerInterval);
                 handleTimeout();
             }
-        }, updateInterval);
+        }, 50);
     }
 
     function handleTimeout() {
         if (!isAnswering) return;
         isAnswering = false;
-        try { recognition.stop(); } catch(e) {}
+        try { recognition.stop(); } catch(e){}
 
         wrongCount++;
         document.getElementById('score-wrong').innerText = wrongCount;
@@ -315,7 +284,7 @@
         if (userAnswer === correctAnswer) {
             isAnswering = false;
             clearInterval(timerInterval);
-            try { recognition.stop(); } catch(e) {}
+            try { recognition.stop(); } catch(e){}
 
             correctCount++;
             document.getElementById('score-correct').innerText = correctCount;
@@ -326,19 +295,28 @@
         }
     }
 
+    function manualInput(val) {
+        if (!isAnswering) return;
+        inputBuffer += val.toString();
+        document.getElementById('recognized-text').innerText = '按鍵輸入：' + inputBuffer;
+        checkAnswer(parseInt(inputBuffer, 10));
+    }
+
+    function clearInput() {
+        inputBuffer = "";
+        document.getElementById('recognized-text').innerText = "";
+    }
+
     function endQuiz() {
         isAnswering = false;
         clearInterval(timerInterval);
-        try { recognition.stop(); } catch(e) {}
+        try { recognition.stop(); } catch(e){}
 
         document.getElementById('quiz-screen').classList.add('hidden');
         document.getElementById('result-screen').classList.remove('hidden');
-
         document.getElementById('final-correct').innerText = correctCount;
         document.getElementById('final-wrong').innerText = wrongCount;
-        
-        let accuracy = Math.round((correctCount / totalQuestions) * 100);
-        document.getElementById('final-accuracy').innerText = accuracy + '%';
+        document.getElementById('final-accuracy').innerText = Math.round((correctCount / totalQuestions) * 100) + '%';
     }
 
     function resetQuiz() {
@@ -346,30 +324,25 @@
         document.getElementById('start-screen').classList.remove('hidden');
     }
 
-    // 中文/數字語音轉換
     function parseChineseNumber(text) {
         text = text.trim();
         let digits = text.match(/\d+/);
         if (digits) return parseInt(digits[0], 10);
 
         const cnMap = { '零':0, '一':1, '二':2, '兩':2, '三':3, '四':4, '五':5, '六':6, '七':7, '八':8, '九':9 };
-        
         if (text.includes('十')) {
             let parts = text.split('十');
             let tens = parts[0] === '' ? 1 : cnMap[parts[0]];
             let ones = parts[1] === '' ? 0 : cnMap[parts[1]];
             if (tens !== undefined && ones !== undefined) return tens * 10 + ones;
         }
-
         let chars = text.split('');
         if (chars.length === 2 && cnMap[chars[0]] !== undefined && cnMap[chars[1]] !== undefined) {
             return cnMap[chars[0]] * 10 + cnMap[chars[1]];
         }
-
         if (chars.length === 1 && cnMap[chars[0]] !== undefined) {
             return cnMap[chars[0]];
         }
-
         return null;
     }
 </script>
