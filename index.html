@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>九九乘法語音測驗 (iOS優化版)</title>
+    <title>九九乘法語音測驗 (每日紀錄版)</title>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
@@ -57,6 +57,16 @@
             display: flex; justify-content: space-around; background: #f8f9fa;
             padding: 10px; border-radius: 10px; margin-bottom: 15px; font-weight: bold;
         }
+        .time-badge {
+            background-color: #edf2f7;
+            color: #4a5568;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
         .correct-text { color: #27ae60; }
         .wrong-text { color: #e74c3c; }
         .question-box { font-size: 52px; font-weight: bold; color: #2c3e50; margin: 10px 0; }
@@ -64,7 +74,7 @@
         .recognized-text { font-size: 15px; color: #8e44ad; min-height: 22px; margin-bottom: 10px; }
         .hidden { display: none; }
         
-        /* 備用數字按鈕區 */
+        /* 備用數字鍵盤 */
         .numpad {
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px;
         }
@@ -78,6 +88,7 @@
 <body>
 
 <div class="card">
+    <!-- 1. 開始畫面 -->
     <div id="start-screen">
         <h1>九九乘法語音測驗</h1>
         <p style="color: #7f8c8d; font-size: 14px;">iOS 提示：請確認 iPad 已開啟「設定 > 一般 > 鍵盤 > 啟用聽寫」。</p>
@@ -85,11 +96,13 @@
         <div class="setting-group">
             <label for="time-limit">每題思考時間：</label>
             <input type="number" id="time-limit" value="5" min="2" max="10"> 秒
+            <div style="font-size: 13px; color: #95a5a6; margin-top: 5px;">(上限 10 秒)</div>
         </div>
 
         <button class="btn" onclick="startQuiz()">開始測驗</button>
     </div>
 
+    <!-- 2. 測驗進行畫面 -->
     <div id="quiz-screen" class="hidden">
         <div class="stats-box">
             <div>題數：<span id="current-q">1</span>/25</div>
@@ -108,7 +121,6 @@
         <div class="status-msg" id="status-msg">請點擊上方按鈕後回答</div>
         <div class="recognized-text" id="recognized-text"></div>
 
-        <!-- 備用數字鍵盤（語音失效時可直接按） -->
         <details>
             <summary style="color: #7f8c8d; font-size: 14px; cursor: pointer;">無法使用語音？點此開啟數字鍵盤</summary>
             <div class="numpad">
@@ -127,14 +139,21 @@
         </details>
     </div>
 
+    <!-- 3. 結果結算畫面 (含日期時間) -->
     <div id="result-screen" class="hidden">
-        <h1>測驗完成！</h1>
-        <div style="font-size: 20px; margin: 20px 0;">
-            <p>答對：<span class="correct-text" id="final-correct">0</span> 題</p>
-            <p>答錯：<span class="wrong-text" id="final-wrong">0</span> 題</p>
-            <p>正確率：<span id="final-accuracy" style="color: #2980b9; font-weight: bold;">0%</span></p>
+        <h1>🎉 測驗完成！</h1>
+        
+        <div class="time-badge">
+            📅 測驗時間：<span id="final-datetime">--</span>
         </div>
-        <button class="btn" onclick="resetQuiz()">重新測驗</button>
+
+        <div style="font-size: 20px; margin: 15px 0;">
+            <p>答對題數：<span class="correct-text" id="final-correct">0</span> / 25 題</p>
+            <p>答錯題數：<span class="wrong-text" id="final-wrong">0</span> 題</p>
+            <p>整體正確率：<span id="final-accuracy" style="color: #2980b9; font-weight: bold;">0%</span></p>
+        </div>
+
+        <button class="btn" onclick="resetQuiz()">再練一次</button>
     </div>
 </div>
 
@@ -214,138 +233,4 @@
     }
 
     function startQuiz() {
-        let inputTime = parseInt(document.getElementById('time-limit').value);
-        timeLimit = (isNaN(inputTime) || inputTime < 2) ? 2 : (inputTime > 10 ? 10 : inputTime);
-        
-        currentQuestion = 0; correctCount = 0; wrongCount = 0;
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('result-screen').classList.add('hidden');
-        document.getElementById('quiz-screen').classList.remove('hidden');
-
-        initSpeech();
-        nextQuestion();
-    }
-
-    function nextQuestion() {
-        stopListeningUI();
-        if (currentQuestion >= totalQuestions) { endQuiz(); return; }
-
-        currentQuestion++;
-        isAnswering = true;
-        inputBuffer = "";
-
-        num1 = Math.floor(Math.random() * 8) + 2;
-        num2 = Math.floor(Math.random() * 8) + 2;
-        correctAnswer = num1 * num2;
-
-        document.getElementById('current-q').innerText = currentQuestion;
-        document.getElementById('score-correct').innerText = correctCount;
-        document.getElementById('score-wrong').innerText = wrongCount;
-        document.getElementById('question-text').innerText = `${num1} × ${num2}`;
-        document.getElementById('status-msg').innerText = "點擊按鈕開口，或使用下方鍵盤";
-        document.getElementById('status-msg').style.color = "#34495e";
-        document.getElementById('recognized-text').innerText = "";
-
-        startTimer();
-    }
-
-    function startTimer() {
-        clearInterval(timerInterval);
-        remainingTime = timeLimit * 1000;
-        const bar = document.getElementById('timer-bar');
-        bar.style.width = '100%';
-
-        timerInterval = setInterval(() => {
-            remainingTime -= 50;
-            bar.style.width = Math.max(0, (remainingTime / (timeLimit * 1000)) * 100) + '%';
-            if (remainingTime <= 0) {
-                clearInterval(timerInterval);
-                handleTimeout();
-            }
-        }, 50);
-    }
-
-    function handleTimeout() {
-        if (!isAnswering) return;
-        isAnswering = false;
-        try { recognition.stop(); } catch(e){}
-
-        wrongCount++;
-        document.getElementById('score-wrong').innerText = wrongCount;
-        document.getElementById('status-msg').innerText = `⏰ 時間到！答案是 ${correctAnswer}`;
-        document.getElementById('status-msg').style.color = "#e74c3c";
-
-        setTimeout(nextQuestion, 1500);
-    }
-
-    function checkAnswer(userAnswer) {
-        if (!isAnswering) return;
-
-        if (userAnswer === correctAnswer) {
-            isAnswering = false;
-            clearInterval(timerInterval);
-            try { recognition.stop(); } catch(e){}
-
-            correctCount++;
-            document.getElementById('score-correct').innerText = correctCount;
-            document.getElementById('status-msg').innerText = "⭕ 答對了！";
-            document.getElementById('status-msg').style.color = "#27ae60";
-
-            setTimeout(nextQuestion, 1000);
-        }
-    }
-
-    function manualInput(val) {
-        if (!isAnswering) return;
-        inputBuffer += val.toString();
-        document.getElementById('recognized-text').innerText = '按鍵輸入：' + inputBuffer;
-        checkAnswer(parseInt(inputBuffer, 10));
-    }
-
-    function clearInput() {
-        inputBuffer = "";
-        document.getElementById('recognized-text').innerText = "";
-    }
-
-    function endQuiz() {
-        isAnswering = false;
-        clearInterval(timerInterval);
-        try { recognition.stop(); } catch(e){}
-
-        document.getElementById('quiz-screen').classList.add('hidden');
-        document.getElementById('result-screen').classList.remove('hidden');
-        document.getElementById('final-correct').innerText = correctCount;
-        document.getElementById('final-wrong').innerText = wrongCount;
-        document.getElementById('final-accuracy').innerText = Math.round((correctCount / totalQuestions) * 100) + '%';
-    }
-
-    function resetQuiz() {
-        document.getElementById('result-screen').classList.add('hidden');
-        document.getElementById('start-screen').classList.remove('hidden');
-    }
-
-    function parseChineseNumber(text) {
-        text = text.trim();
-        let digits = text.match(/\d+/);
-        if (digits) return parseInt(digits[0], 10);
-
-        const cnMap = { '零':0, '一':1, '二':2, '兩':2, '三':3, '四':4, '五':5, '六':6, '七':7, '八':8, '九':9 };
-        if (text.includes('十')) {
-            let parts = text.split('十');
-            let tens = parts[0] === '' ? 1 : cnMap[parts[0]];
-            let ones = parts[1] === '' ? 0 : cnMap[parts[1]];
-            if (tens !== undefined && ones !== undefined) return tens * 10 + ones;
-        }
-        let chars = text.split('');
-        if (chars.length === 2 && cnMap[chars[0]] !== undefined && cnMap[chars[1]] !== undefined) {
-            return cnMap[chars[0]] * 10 + cnMap[chars[1]];
-        }
-        if (chars.length === 1 && cnMap[chars[0]] !== undefined) {
-            return cnMap[chars[0]];
-        }
-        return null;
-    }
-</script>
-
-</body>
-</html>
+        let inputTime = parseInt(document.getElementById('time-
